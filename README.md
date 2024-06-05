@@ -34,7 +34,7 @@ In that case, using "Brew", do this:
 
 ```
 brew install portaudio
-pip install pyaudio
+brew install ffmpeg
 ```
 
 
