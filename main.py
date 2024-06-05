@@ -10,7 +10,7 @@ def main():
     
     # name = args.name
     # if not args.name: name = "Enter Your NAME in terminal eg: python main.py --name 'Knoxy' "
-    name ="junow"
+    name = "bob"
     main_menu = MainMenu(name)
     main_menu.run()
 
