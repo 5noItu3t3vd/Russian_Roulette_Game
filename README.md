@@ -29,4 +29,5 @@ python main.py --name "YOUR_NAME"
 
 ```
 
+Many of the filepaths are still in Windows format, so change the config file if you must 
 
