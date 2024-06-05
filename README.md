@@ -29,5 +29,14 @@ python main.py --name "YOUR_NAME"
 
 ```
 
+You may run into problem when trying to install pyaudio.
+In that case, using "Brew", do this:
+
+```
+brew install portaudio
+pip install pyaudio
+```
+
+
 Many of the filepaths are still in Windows format, so change the config file if you must 
 
