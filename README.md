@@ -6,14 +6,9 @@
 
 ```
 git clone https://github.com/5noItu3t3vd/Russian_Roulette_Game
-```
-
-```
 cd Russian_Roulette_Game
-```
-
-```
 python -m venv gamevenv python=3.11.4
+
 ```
 
 If Windows
@@ -21,14 +16,17 @@ If Windows
 ./gamevenv/Scripts/activate
 ```
 
-Download the python modules
+If Mac
+```source ./gamevenv/bin/activate```
+
+
+Download the python modules and add your name to YOUR_NAME
+
 
 ```
 pip install -r requirements.txt
-```
-
-Add your name to YOUR_NAME
-
-```
 python main.py --name "YOUR_NAME"
+
 ```
+
+
