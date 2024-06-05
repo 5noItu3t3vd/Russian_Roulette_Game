@@ -1,5 +1,7 @@
 from config import *
 
+"""Glock 19  t=0.0589"""
+
 class Shotgun:
     def __init__(self):
         """Initialize a Shotgun instance with default damage and rounds."""
@@ -38,6 +40,9 @@ class Shotgun:
             print(f"The next shot is:(In class shotgun) {self.rounds[0]}")
             return self.rounds[0]
         return None
+    def reset_shotgun(self):
+        self.isExhausted = True
+        self.rounds = []
     
     def add_rounds(self, turn=1):
         

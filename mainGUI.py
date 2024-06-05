@@ -66,6 +66,7 @@ class MainMenu:
         print(f"Mouse clicked at: {pos}")
 
     def run(self):
+        pygame.mixer.music.load(MAINMENU_BGM)
         pygame.mixer.music.play(-1)  # Play the music on loop
         running = True
         while running:

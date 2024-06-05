@@ -19,38 +19,26 @@ class Engine:
         self.shot_counts = None
         self.current_player = self.player
         self.other_player = self.opponent
-        self.turn = 0
         
         self.isExhausted = True
         self.next_shot = None
 
-    def reload_all_bullets(self):
+    def reload_all_bullets(self,rounds):
         """Reload all bullets if the shotgun is exhausted."""
         if self.shotgun.is_exhausted():
+            self.refill_items(rounds)
             play_mp3(RELOAD_SOUND)
-            self.shotgun.add_rounds(self.turn)
-            self.isExhausted = False
-            print("HELLLLLLOOO")
-        
-        self.shot_counts = self.shotgun.get_rounds()
-        self.next_shot = self.shotgun.get_next_shot()
-        print(f"Turns: {self.turn}")
+            self.shotgun.add_rounds(rounds)
+            self.isExhausted = False        
 
-    def add_turn(self):
-        """Increment the turn and reload bullets."""
-        self.turn += 1
-        self.reload_all_bullets()
-
-    def start_round(self):
+    def start_round(self,rounds):
         """Start a new round, reloading bullets and choosing players."""
-        self.add_turn()
-        self.reload_all_bullets()
+        self.reload_all_bullets(rounds)
+        
         
         self.current_player = random.choice([self.opponent,self.player])
         self.other_player = self.opponent if self.current_player == self.player else self.player
         
-        self.current_player.create_gatcha_items(self.turn)
-        self.other_player.create_gatcha_items(self.turn)
         self.next_shot = self.shotgun.get_next_shot()  # Get the actual next shot
         assert(self.next_shot == self.shotgun.rounds[0])  # Check against the first round in the list
         return self.next_shot
@@ -60,7 +48,13 @@ class Engine:
         self.player.reset()
         self.opponent.reset()
         self.shotgun.reset_damage()
+        self.shotgun.reset_shotgun()
         self.status_text()
+        
+    def refill_items(self,round):
+        self.opponent.create_gatcha_items(round)
+        self.player.create_gatcha_items(round)
+        
 
     def role_switch(self):
         """Switch the roles of the current and other players."""

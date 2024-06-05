@@ -7,7 +7,6 @@ from engine import Engine
 from Characters.Player import Player
 from textbox import TextBox
 from actionhandler import ActionHandler
-from playaudio import play_mp3
 
 class GameGUI:
     def __init__(self, mainmenu, name):
@@ -16,6 +15,8 @@ class GameGUI:
         pygame.init()
         pygame.mixer.init()
         pygame.mixer.music.load(BATTLEBGM)
+        pygame.mixer.music.set_volume(0.5)
+
 
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("Single Player Mode")
@@ -27,12 +28,18 @@ class GameGUI:
         # Load the Opponent Image
         self.opponent_image = pygame.image.load(OPPONENT_DEFAULT_IMAGE)
         self.opponent_image = pygame.transform.scale(self.opponent_image, ENEMY_SIZE)
+        
+        self.round1_image = pygame.image.load(ROUND1IMAGE)
+        self.round2_image = pygame.image.load(ROUND2IMAGE)
+        self.round3_image = pygame.image.load(ROUND3IMAGE)
+        self.round1_image = pygame.transform.scale(self.round1_image, (SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
+        self.round2_image = pygame.transform.scale(self.round2_image, (SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
+        self.round3_image = pygame.transform.scale(self.round3_image, (SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
 
         # Load smaller ui
         self.check_grid = pygame.image.load(INFORMATION_BOX_BACKGROUND)
-        self.check_grid = pygame.transform.scale(self.check_grid, (SCREEN_WIDTH*0.8, SCREEN_HEIGHT*0.8))
+        self.check_grid = pygame.transform.scale(self.check_grid, (SCREEN_WIDTH*0.9, SCREEN_HEIGHT*0.9))
         self.check_grid_pos = ((SCREEN_WIDTH - self.check_grid.get_width()) // 2, (SCREEN_HEIGHT - self.check_grid.get_height()) // 2)
-
         
         # Blinking state
         self.blinking = False
@@ -54,17 +61,7 @@ class GameGUI:
         self.player_animation_dict = {SELF+SUCCEED: [], OPP+SUCCEED: [], SELF+FAIL: [], OPP+FAIL: []}
         self.ai_animation_dict = {SELF+SUCCEED: [], OPP+SUCCEED: [], SELF+FAIL: [], OPP+FAIL: []}
 
-        for player, ai, player_keys, ai_keys in zip(PLAYER_SHOOT_ANIMATIONS, AI_SHOOT_ANIMATIONS,
-                                                    self.player_animation_dict.keys(), self.ai_animation_dict.keys()):
-            ai = self.load_animation_frames(ai)
-            player = self.load_animation_frames(player)
-            self.ai_animation_dict[ai_keys].extend(ai)
-            self.player_animation_dict[player_keys].extend(player)
-
-        self.loop_animation = self.load_animation_frames(LOOP_SHOOT)
-
         # Game Engine Variables
-        self.items_used = False
 
         self.engine = Engine(player=Player(name=self.name))
         self.player = self.engine.get_player()
@@ -80,11 +77,13 @@ class GameGUI:
         self.next_shot = None
         self.shot_counts = None
         self.isExhausted = None
+        self.items_used = []
+        self.game_round = 1
         
         self.dialogues = DIALOGUES
         self.talk_done = None
         
-        self.action_manager = ActionHandler(self, self.player, self.opponent)
+        self.action_manager = ActionHandler(self, self.engine.get_player(), self.engine.get_opponent())
         
         self.undo_button_var = None
         self.itm_button_var = None
@@ -95,17 +94,47 @@ class GameGUI:
         self.sek_button_var = None
         self.pow_button_var = None
         self.heal_button_var = None
+        
+        
+        self.small_icon_size = (SCREEN_WIDTH//20,SCREEN_HEIGHT//20)
+        self.heart_img = pygame.image.load(FULL_HEART_IMAGE)
+        self.heart_img = pygame.transform.scale(self.heart_img,self.small_icon_size)
+        self.noheart_img = pygame.image.load(LOST_HEART_IMAGE)
+        self.noheart_img = pygame.transform.scale(self.heart_img,self.small_icon_size)
+        
+        self.opponent_heart_pos = (512, 168)
+        self.player_heart_pos = (989, 650)
+        self.heart_spacing = 50 
+        
+        self.heart_opponent_button_var = None
+        self.heart_player_button_var = None
+        self.noheart_player_button_var = None
+        self.noheart_player_button_var = None
+        
             
 
         # Init functions
+        self.initialize_shot_frames()
         self.talk_sequence(self.dialogues, self.start_round)
         # self.initial_buttons()
         # self.start_round()
         
-    def start_round(self):
-        self.next_shot = self.engine.start_round()
-        # dialogue = [f"Player {self.current_player.get_name()} Starts"]
-        # self.talk_sequence(dialogue, self.wave_start)
+        
+        
+    def start_round(self,):
+        self.engine.reset_all()
+        round_image = None
+        if self.game_round == 1:
+            round_image = self.round1_image
+        elif self.game_round == 2:
+            round_image = self.round2_image
+        elif self.game_round == 3:
+            round_image = self.round3_image
+        
+        if round_image:
+            self.animate_round_image(round_image)
+            
+        self.next_shot = self.engine.start_round(self.game_round)
         self.action()
         
     def wave_start(self):
@@ -113,17 +142,17 @@ class GameGUI:
             self.create_check_buttons()
             
         
-        self.engine.reload_all_bullets()
+        self.engine.reload_all_bullets(self.game_round)
         
-        dialogue = [f"You have {self.player.itemToString()}", f"Player {self.opponent.get_name()} has {self.opponent.itemToString()}"]
+        dialogue = [f"You have {self.engine.get_player().itemToString()}", f"Player {self.opponent.name} has {self.engine.get_opponent().itemToString()}"]
         self.talk_sequence(dialogue, self.action)
         
     def action(self):
         
-        if self.current_player == self.player:
+        if type(self.engine.get_current_player()) == Player:
             self.initial_buttons()
-        elif self.current_player == self.opponent:
-            action = self.opponent.get_action(self.shotgun, self.sight)
+        elif self.engine.get_opponent() == self.opponent:
+            action = self.engine.get_opponent().get_action(self.shotgun, self.sight)
             self.handle_opponent_action(action)
         else:
             raise AssertionError("This cannot happen")
@@ -152,52 +181,50 @@ class GameGUI:
         
     def computer_shoot(self,decision):
         if decision==SELF:
-            result = self.current_player.take_damage(self.engine.get_shotgun())
+            result = self.engine.get_opponent().take_damage(self.engine.get_shotgun())
         elif decision==OPP:
-            result = self.other_player.take_damage(self.engine.get_shotgun())
-        self.play_ending_animation(self.ai_animation_dict[decision+SUCCEED] if result==1 else self.ai_animation_dict[decision+FAIL])        
+            result = self.engine.get_player().take_damage(self.engine.get_shotgun())
+        self.play_ending_animation(self.ai_animation_dict[decision+SUCCEED] if result==1 else self.ai_animation_dict[decision+FAIL],decision=decision,result=result)        
         self.take_damage_sequence(decision,result)
         
 
     def shoot_animation(self,decision):
-        print("Next shot is",self.next_shot)
         if self.next_shot is None:
             raise ValueError("You don't have any more rounds")
 
         self.play_looping_animation(self.loop_animation, GUN_ANIMATION_POS, decision)
         
     def take_damage_sequence(self,decision,result):
-        print(f"IN TAKE_DAMGE: You are {self.current_player.name}")
         if decision == OPP:
             if result:
                 print("The result was a Success!!!!")
-                if self.other_player.is_dead():
-                    dialogue = [f"{self.other_player.get_name()}'s lifepoint is over"]
-                    self.state = PLAYERDEAD if self.engine.other_player == self.player else OPPDEAD
+                if self.engine.get_other_player().is_dead():
+                    dialogue = [f"{self.engine.get_other_player().get_name()}'s lifepoint is over"]
+                    self.state = PLAYERDEAD if type(self.engine.other_player) == Player else OPPDEAD
                     self.talk_sequence(dialogue, self.process_next_wave)
                 else:
-                    dialogue = [f"{self.other_player.get_name()}'s heart has been taken!"]
+                    dialogue = [f"{self.engine.get_other_player().get_name()}'s heart has been taken!"]
                     self.state = SWICHTURN
                     self.talk_sequence(dialogue, self.process_next_wave)
             else:
-                dialogue = [f"{self.other_player.get_name()} survived the shot!","It was a blank shot"]
+                dialogue = [f"{self.engine.get_other_player().get_name()} survived the shot!","It was a blank shot"]
                 self.state = SWICHTURN
                 self.talk_sequence(dialogue, self.process_next_wave)
 
         elif decision == SELF:
             if result:
                 print("The result was a Success!!!! But Self.....")
-                if self.current_player.is_dead():
-                    dialogue = [f"{self.current_player.get_name()}'s lifepoint is over"]
-                    self.state = PLAYERDEAD if self.current_player == self.player else OPPDEAD
+                if self.engine.get_current_player().is_dead():
+                    dialogue = [f"{self.engine.get_current_player().get_name()}'s lifepoint is over"]
+                    self.state = PLAYERDEAD if type(self.engine.get_current_player()) == Player else OPPDEAD
                     self.talk_sequence(dialogue, self.process_next_wave)
                 else:
-                    dialogue = [f"{self.current_player.get_name()}'s heart has been taken!"]
+                    dialogue = [f"{self.engine.get_current_player().get_name()}'s heart has been taken!"]
                     self.state = SWICHTURN
                     self.talk_sequence(dialogue, self.process_next_wave)
             else:
-                dialogue = [f"{self.current_player.get_name()} survived the shot!","It was a blank shot"]
-                self.state = PLAYERAGAIN if self.current_player==self.player else OPPAGAIN
+                dialogue = [f"{self.engine.get_current_player().get_name()} survived the shot!","It was a blank shot"]
+                self.state = PLAYERAGAIN if type(self.engine.get_current_player())==Player else OPPAGAIN
                 self.talk_sequence(dialogue, self.process_next_wave)
         
 
@@ -211,6 +238,9 @@ class GameGUI:
         self.textbox = None
 
     def round_2_start(self):
+        if self.game_round>3:
+            self.gameover()
+        self.game_round += 1
         self.engine.reset_all()
         self.start_round()
         
@@ -224,15 +254,13 @@ class GameGUI:
     def process_next_wave(self):
         result = self.state
         self.sight = UNKNOWN
-        print("Here is our results!!!: ",result)
         
         if result==PLAYERDEAD:
             self.state = GAMEOVER
             dialogue = ["It is Game over then"]
             self.talk_sequence(dialogue, self.gameover)
         elif result==OPPDEAD:
-            print("Engine Turns:", self.engine.turn)
-            if self.engine.turn > 3:
+            if self.game_round > 3:
                 self.state = GAMEOVER
                 dialogue = ["You've Won"]
                 self.talk_sequence(dialogue, self.gameover)
@@ -307,7 +335,6 @@ class GameGUI:
             self.initial_buttons()
 
     def create_attack_buttons(self):
-        print("Creating attack buttons")  # Debug statement
         self.buttons.clear()
         self.state = ATTACK
         self.create_undo_button(self.atk_button_var)
@@ -322,7 +349,7 @@ class GameGUI:
             self.buttons.append(new_button)
                      
     def create_check_buttons(self):
-        self.engine.reload_all_bullets()
+        self.engine.reload_all_bullets(self.game_round)
         self.buttons.clear()
         self.state = CHECK
         
@@ -334,7 +361,7 @@ class GameGUI:
         
         # Calculate the size of each bullet image
         grid_height = self.check_grid.get_height()
-        bullet_height = int(grid_height * 2 / 5)
+        bullet_height = int(grid_height * 3 / 10)
         bullet_size = (bullet_height, bullet_height)  # Keep it square for simplicity
         
         self.live_bullet_image = pygame.transform.scale(self.live_bullet_image, bullet_size)
@@ -345,21 +372,40 @@ class GameGUI:
         blank_bullets_count = len(self.engine.shotgun.get_rounds()) - live_bullets_count
 
         # Calculate positions to line up the bullets
-        bullet_x = self.check_grid_pos[0] + 20  # Example offset from the left edge of the smaller background
-        live_bullet_y = self.check_grid_pos[1] + 20  # Top row for live bullets
-        blank_bullet_y = self.check_grid_pos[1] + self.check_grid.get_height() - 20 - bullet_height  # Bottom row for blank bullets
+        bullet_x = self.check_grid_pos[0] + 20  
+        live_bullet_y = self.check_grid_pos[1] + 20  
+        blank_bullet_y = self.check_grid_pos[1] + self.check_grid.get_height() - 200 - bullet_height
 
         # Create lists of positions for live and blank bullets
-        self.live_bullet_positions = [(bullet_x + i * (bullet_size[0] + 10), live_bullet_y) for i in range(live_bullets_count)]
-        self.blank_bullet_positions = [(bullet_x + i * (bullet_size[0] + 10), blank_bullet_y) for i in range(blank_bullets_count)]
+        self.live_bullet_positions = [(bullet_x + 0.5*i * (bullet_size[0] + 10), live_bullet_y) for i in range(live_bullets_count)]
+        self.blank_bullet_positions = [(bullet_x + 0.5*i * (bullet_size[0] + 10), blank_bullet_y) for i in range(blank_bullets_count)]
 
         # Load and position the next shot image
-        self.next_shot_image = pygame.image.load(YOU_BUTTON)
+        self.next_shot_image = pygame.image.load(NEXTSHOTREVEAL)
         self.next_shot_image = pygame.transform.scale(self.next_shot_image, bullet_size)  # Same size as bullets
-        next_shot_x = self.check_grid_pos[0] + self.check_grid.get_width() - bullet_size[0] - 20  # Right edge with a margin
-        next_shot_y = self.check_grid_pos[1] + (self.check_grid.get_height() - bullet_size[1]) // 2  # Centered vertically
+        self.next_result = None
+        self.cloud =  pygame.image.load(SIGHT_BUTTON)
+        self.cloud = pygame.transform.scale(self.cloud, bullet_size)
+        
+        
+        next_shot_x = self.check_grid_pos[0] + self.check_grid.get_width() - bullet_size[0] - 200 
+        next_shot_y = live_bullet_y + 50
+        cloud_shot_y = blank_bullet_y
+        cloud_shot_x = next_shot_x
+        
+        
         self.next_shot_position = (next_shot_x, next_shot_y)
-    
+        self.cloud_position = (cloud_shot_x,cloud_shot_y)
+        self.revealed_shot_position = None
+        
+        
+        
+        if self.sight !=UNKNOWN:
+            self.next_result = pygame.image.load(LIVE_BULLET_IMAGE) if self.sight==1 else pygame.image.load(BLANK_BULLET_IMAGE)
+            self.next_result = pygame.transform.scale(self.next_result, bullet_size)
+            revealed_shot_y = blank_bullet_y
+            revealed_shot_x = next_shot_x
+            self.revealed_shot_position = (revealed_shot_x,revealed_shot_y)
 
 
 
@@ -378,7 +424,28 @@ class GameGUI:
 
         # Draw next shot image
         self.screen.blit(self.next_shot_image, self.next_shot_position)
+        
+        if self.sight != UNKNOWN and self.next_result:
+            self.screen.blit(self.next_result, self.revealed_shot_position)
+        else:
+            self.screen.blit(self.cloud, self.cloud_position)
 
+    def animate_round_image(self, image):
+        image_rect = image.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+
+        fade_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+        fade_surface.fill((0, 0, 0))
+        fade_surface.set_alpha(0)
+
+        for alpha in range(0, 256, 5):
+            fade_surface.set_alpha(alpha)
+            self.screen.blit(fade_surface, (0, 0))
+            self.screen.blit(image, image_rect)
+            pygame.display.update()
+            pygame.time.delay(30)
+
+        pygame.time.delay(1000)
+    
         
     def create_your_items_button(self):
         self.buttons.clear()
@@ -400,7 +467,6 @@ class GameGUI:
         self.sek_button_var = self.buttons[2]
         
     def create_decision_button(self, decision):
-        print("Creating decision buttons")  # Debug statement
         self.buttons.clear()
         new_button_functions = [lambda: self.shoot_button(decision),self.quit_button]
         new_button_images = DECISION_BUTTON_LIST
@@ -428,7 +494,11 @@ class GameGUI:
         if self.engine.player.item_usable(self.shotgun, STRENGTH):
             self.buttons.clear()
             self.state = POWER
-            self.action_manager.handle_strength(self.current_player, self.action)
+            self.action_manager.handle_strength(self.engine.get_player(), self.action)
+            
+        elif self.engine.get_shotgun().get_damage()==2:
+            dialogue = [f"Your shotgun already has {STRENGTH} in this wave!"]
+            self.talk_sequence(dialogue, self.create_your_items_button)
             
         else:
             dialogue = ["You don't have that item"]
@@ -438,19 +508,27 @@ class GameGUI:
         if self.engine.player.item_usable(self.shotgun, HEALING):
             self.buttons.clear()
             self.state = HEAL
-            self.action_manager.handle_healing(self.current_player, self.action)
+            self.action_manager.handle_healing(self.engine.get_player(), self.action)
 
+        if self.engine.get_player().get_health()>3:
+            dialogue = ["You already have the max health"]
+            self.talk_sequence(dialogue, self.create_your_items_button)
+        
         else:
             dialogue = ["You don't have that item"]
             self.talk_sequence(dialogue, self.create_your_items_button)
             
     def your_sight_button_func(self):
+        
         if self.engine.player.item_usable(self.shotgun, REVEALER):
             self.buttons.clear()
             self.state = REVEAL
-            self.sight = self.next_shot
-            print(f"The next shot will be: {self.sight}")
-            self.action_manager.handle_revealer(self.current_player, self.action)
+            self.sight = self.engine.get_shotgun().get_next_shot()
+            self.action_manager.handle_revealer(self.engine.get_player(), self.action)
+            
+        elif self.sight != UNKNOWN:
+            dialogue = [f"You have already used the {REVEALER}, check your magnifying glass"]
+            self.talk_sequence(dialogue, self.create_your_items_button)
 
         else:
             dialogue = ["You don't have that item"]
@@ -470,13 +548,13 @@ class GameGUI:
         
     def shoot_button(self,decision):
         print(f"You shot {self.state}")
-        print(f"You are {self.current_player.name}")
+        print(f"You are {self.engine.get_player().name}")
         self.buttons.clear()
         if decision==SELF:
-            result = self.current_player.take_damage(self.engine.get_shotgun())
+            result = self.engine.get_player().take_damage(self.engine.get_shotgun())
         elif decision==OPP:
-            result = self.other_player.take_damage(self.engine.get_shotgun())
-        self.play_ending_animation(self.player_animation_dict[decision+SUCCEED] if result==1 else self.player_animation_dict[decision+FAIL])        
+            result = self.engine.get_opponent().take_damage(self.engine.get_shotgun())
+        self.play_ending_animation(self.player_animation_dict[decision+SUCCEED] if result==1 else self.player_animation_dict[decision+FAIL],decision=decision,result=result)        
         self.take_damage_sequence(decision,result)
 
     def quit_button(self):
@@ -490,31 +568,70 @@ class GameGUI:
 
 
 
+    def initialize_shot_frames(self):
+        self.ai_self_soundframe, self.ai_opp_soundframe = AI_SHOT_SOUND_FRAMES[0], AI_SHOT_SOUND_FRAMES[1]
+        self.player_self_soundframe, self.player_opp_soundframe = PLAYER_SHOT_SOUND_FRAMES[0], PLAYER_SHOT_SOUND_FRAMES[1]
+        
+        self.loop_animation = self.load_animation_frames(LOOP_SHOOT)
+        """SHOT FRAMES"""
+        for index, (n1, playerpath, n2, aipath) in enumerate(zip(PLAYER_SHOT_SOUND_FRAMES, PLAYER_SHOOT_ANIMATIONS, AI_SHOT_SOUND_FRAMES, AI_SHOOT_ANIMATIONS)):
+            success_player_frames = self.load_animation_frames(playerpath)
+            fail_player_frames = self.load_animation_frames(playerpath, n1)
+            success_ai_frames = self.load_animation_frames(aipath)
+            fail_ai_frames = self.load_animation_frames(aipath, n2)
+            
+            if index == 0:
+                self.player_animation_dict[SELF + SUCCEED].extend(success_player_frames)
+                self.player_animation_dict[SELF + FAIL].extend(fail_player_frames)
+                self.ai_animation_dict[SELF + SUCCEED].extend(success_ai_frames)
+                self.ai_animation_dict[SELF + FAIL].extend(fail_ai_frames)
+            elif index == 1:
+                self.player_animation_dict[OPP + SUCCEED].extend(success_player_frames)
+                self.player_animation_dict[OPP + FAIL].extend(fail_player_frames)
+                self.ai_animation_dict[OPP + SUCCEED].extend(success_ai_frames)
+                self.ai_animation_dict[OPP + FAIL].extend(fail_ai_frames)
 
-
-    def load_animation_frames(self, folder):
+    def load_animation_frames(self, folder,fail_frame=None):
         frames = []
+        frames_index = 0
         for filename in sorted(os.listdir(folder)):
             if filename.endswith('.png'):
                 frame = pygame.image.load(os.path.join(folder, filename))
                 frame = pygame.transform.scale(frame, self.frame_size)
                 frames.append(frame)
+                if fail_frame and frames_index == fail_frame:
+                    break
+                frames_index +=1
+            
         return frames
 
-    def play_ending_animation(self, frames, position=None):
+    def play_ending_animation(self, frames, decision=None,position=None,result=None):
         if position is None:
             position = self.center_position
         frame_index = 0
-
+        
         for frame in frames:
-            time.sleep(0.5)
             
+            if result==1:
+                if self.engine.get_current_player()==self.engine.get_player():
+                    if decision == SELF and frame_index == self.player_self_soundframe:
+                        play_mp3(GUN_SHOT_SOUND)
+                        
+                    elif decision == OPP and frame_index == self.player_opp_soundframe:
+                        play_mp3(GUN_SHOT_SOUND)
+                elif self.engine.get_current_player()==self.engine.get_opponent():
+                    if decision == SELF and frame_index == self.ai_self_soundframe:
+                        play_mp3(GUN_SHOT_SOUND)
+                    elif decision == OPP and frame_index == self.ai_opp_soundframe:
+                        play_mp3(GUN_SHOT_SOUND)
+            _num = 0    
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    return  # End the animation early if the mouse is clicked
+                    _num += 1
+                    return _num==2 # End the animation early if the mouse is clicked
 
             # Clear the screen by drawing the background
             self.screen.blit(self.background_image, (0, 0))
@@ -527,6 +644,9 @@ class GameGUI:
 
             frame_index += 1
             pygame.time.delay(100)
+        
+        if result == 0:
+            frozen_play(GUN_BLANK_SOUND)
 
     def play_looping_animation(self, frames, position, decision):
         if position is None:
@@ -592,10 +712,6 @@ class GameGUI:
             self.shotgun = self.engine.get_shotgun()
             self.current_player = self.engine.get_current_player()
             self.other_player = self.engine.get_other_player()
-            if self.shotgun.get_revealed():
-                self.sight = self.next_shot
-            else:
-                self.sight = UNKNOWN
 
     def print_coordinates(self, pos):
         print(f"Mouse clicked at: {pos}")

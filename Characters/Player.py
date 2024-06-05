@@ -26,8 +26,8 @@ class Player:
                 self.health = 0
             return True
         
-        else:
-            return False
+        shotgun.reset_damage()
+        return False
         
     def is_dead(self) -> bool:
         return self.health <= 0
@@ -61,12 +61,15 @@ class Player:
             raise ValueError("Invalid item")
         
     def create_gatcha_items(self, num):
-        num -= 1
         item_choices = [HEALING, STRENGTH, REVEALER]
-        if not num: return
+        if not num: raise Exception("Cannot Be Possible")
+        
+        
         for _ in range(num):
             selected_item = random.choice(item_choices)
             self.add_items(selected_item)
+            if len(self.items)>(2+num):
+                break
             
     def reset_items(self):
         """Reset the player's inventory."""

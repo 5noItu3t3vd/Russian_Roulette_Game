@@ -10,11 +10,11 @@ FRAME_SIZE = (600, 472)
 
 # Paths to your animation frame folders
 LOOP_SHOOT = LOOP_SHOOT
-AI_SHOOT_ANIMATIONS = {
-    'self_suc': SUCCEED_AI_SELF,
-    'opp_suc': SUCCEED_AI_OPP,
-    'self_fail': FAIL_AI_SELF,
-    'opp_fail': FAIL_AI_OPP
+PLAYER_SHOOT_ANIMATIONS = {
+    'self_suc': SUCCEED_SELF_SHOOT,
+    'opp_suc': SUCCEED_OPP_SHOOT,
+    'self_fail': FAIL_SELF_SHOT,
+    'opp_fail': FAIL_OPP_SHOT
 }
 
 def load_animation_frames(folder, frame_size):
@@ -47,8 +47,8 @@ def play_animation(frames, screen, position, loop=True, delay=100):
             screen.fill((0, 0, 0))  # Clear the screen with a black color
             screen.blit(frames[frame_index], position)
             pygame.display.flip()
-            if frame_index == 40:
-                
+            if frame_index == 51:
+                play_mp3(GUN_SHOT_SOUND)
             print(frame_index)
             frame_index = (frame_index + 1) % len(frames)
             if not loop and frame_index == 0:
@@ -66,10 +66,10 @@ def main():
 
     # Load the animation frames
     loop_frames = load_animation_frames(LOOP_SHOOT, FRAME_SIZE)
-    self_suc_frames = load_animation_frames(AI_SHOOT_ANIMATIONS['self_suc'], FRAME_SIZE)
-    opp_suc_frames = load_animation_frames(AI_SHOOT_ANIMATIONS['opp_suc'], FRAME_SIZE)
-    self_fail_frames = load_animation_frames(AI_SHOOT_ANIMATIONS['self_fail'], FRAME_SIZE)
-    opp_fail_frames = load_animation_frames(AI_SHOOT_ANIMATIONS['opp_fail'], FRAME_SIZE)
+    self_suc_frames = load_animation_frames(PLAYER_SHOOT_ANIMATIONS['self_suc'], FRAME_SIZE)
+    opp_suc_frames = load_animation_frames(PLAYER_SHOOT_ANIMATIONS['opp_suc'], FRAME_SIZE)
+    self_fail_frames = load_animation_frames(PLAYER_SHOOT_ANIMATIONS['self_fail'], FRAME_SIZE)
+    opp_fail_frames = load_animation_frames(PLAYER_SHOOT_ANIMATIONS['opp_fail'], FRAME_SIZE)
 
     center_position = ((SCREEN_WIDTH - FRAME_SIZE[0]) // 2, (SCREEN_HEIGHT - FRAME_SIZE[1]) // 2)
 

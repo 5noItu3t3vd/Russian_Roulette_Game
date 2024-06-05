@@ -2,7 +2,7 @@ import pygame
 from config import *
 
 class Button:
-    def __init__(self, image_path, size, position, function=None, text=None, font_size=30, text_color=(0, 0, 0)):
+    def __init__(self, image_path, size, position, function=None, text=None, font_size=30, text_color=(0, 0, 0), button_sound=BUTTON_SOUND):
         self.image_path = image_path
         self.size = size
         self.position = position
@@ -18,6 +18,9 @@ class Button:
         self.font = pygame.font.SysFont(None, font_size)  # Initialize the font
         self.animating = False
         self.animation_frames = 0
+        self.button_sound = button_sound
+        self.mouse_down = None
+        
         
     def load_image(self):
         if self.image_path:
@@ -45,10 +48,20 @@ class Button:
             self.animation_frames -= 1
             if self.animation_frames <= 0:
                 self.animating = False
+                
+        self.mouse_down = pygame.mouse.get_pressed()[0] and self.is_clicked(pygame.mouse.get_pos())
+
 
     def draw(self, screen):
         if self.image:
-            screen.blit(self.image, self.rect.topleft)
+            if self.mouse_down:
+                lightened_image = self.image.copy()
+                lightened_image.fill((70, 70, 70, 0), special_flags=pygame.BLEND_RGBA_ADD)
+                screen.blit(lightened_image, self.rect.topleft)
+                
+            else:
+                screen.blit(self.image, self.rect.topleft)
+
         if self.text:
             text_surface = self.font.render(self.text, True, self.text_color)
             text_rect = text_surface.get_rect(center=self.rect.center)
@@ -59,7 +72,7 @@ class Button:
 
     def click(self):
         if self.function:
-            play_mp3(BUTTON_SOUND)
+            play_mp3(self.button_sound)
             self.function()
 
     def blink(self, state):

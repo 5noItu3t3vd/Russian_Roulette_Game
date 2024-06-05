@@ -7,10 +7,11 @@ import random
 from pydub import AudioSegment
 from pydub.playback import play
 from playaudio import play_mp3
+from playaudio import frozen_play
 from collections import Counter
 import threading
 
-# random.seed(1)
+random.seed(1)
 
 # STRING VARIABLES
 REVEAL = 'reveal'
@@ -52,7 +53,8 @@ OPPNEXTROUND = 'oppnextround'
 OPPAGAIN = 'oppagain'
 OPPTURN = 'oppturn'
 
-
+AI = "ai"
+PLAYER = "player"
 
 
 
@@ -107,20 +109,32 @@ ITEM_BUTTON_LIST = [POWER_BUTTON,HEAL_BUTTON,SIGHT_BUTTON]
 ATTACK_BUTTON_LIST = [YOU_BUTTON,ENEMY_BUTTON]
 DECISION_BUTTON_LIST = [SHOOT_BUTTON,QUIT_BUTTON]
 
+NEXTSHOTREVEAL = "resources\\NEXT!!!!!!.png"
+
 SUCCEED_SELF_SHOOT = "resources\\Succeed_Self_Shot"
 SUCCEED_OPP_SHOOT = "resources\\Succeed_Opp_Shot"
-FAIL_SELF_SHOT = "resources\\Failed_Self_Shot"
-FAIL_OPP_SHOT = "resources\\Failed_Opp_Shot"
+# FAIL_SELF_SHOT = "resources\\Failed_Self_Shot"
+# FAIL_OPP_SHOT = "resources\\Failed_Opp_Shot"
 
 SUCCEED_AI_SELF = "resources\\SUCCEED_AI_SELF"
 SUCCEED_AI_OPP = "resources\\SUCCEED_AI_OPP"
-FAIL_AI_SELF = "resources\\AI_FAIL_SELF"
-FAIL_AI_OPP = "resources\\AI_FAIL_OPP"
+# FAIL_AI_SELF = "resources\\AI_FAIL_SELF"
+# FAIL_AI_OPP = "resources\\AI_FAIL_OPP"
 
-PLAYER_SHOOT_ANIMATIONS = [SUCCEED_SELF_SHOOT,SUCCEED_OPP_SHOOT,FAIL_SELF_SHOT,FAIL_OPP_SHOT]
-AI_SHOOT_ANIMATIONS = [SUCCEED_AI_SELF,SUCCEED_AI_OPP,FAIL_AI_SELF,FAIL_AI_OPP]
+# PLAYER_SHOOT_ANIMATIONS = [SUCCEED_SELF_SHOOT,SUCCEED_OPP_SHOOT,FAIL_SELF_SHOT,FAIL_OPP_SHOT]
+# AI_SHOOT_ANIMATIONS = [SUCCEED_AI_SELF,SUCCEED_AI_OPP,FAIL_AI_SELF,FAIL_AI_OPP]
+PLAYER_SHOOT_ANIMATIONS = [SUCCEED_SELF_SHOOT,SUCCEED_OPP_SHOOT] #.extend([SUCCEED_SELF_SHOOT,SUCCEED_OPP_SHOOT])
+AI_SHOOT_ANIMATIONS = [SUCCEED_AI_SELF,SUCCEED_AI_OPP] #.extend([SUCCEED_AI_SELF,SUCCEED_AI_OPP])
+
+PLAYER_SHOT_SOUND_FRAMES = [102,51]
+AI_SHOT_SOUND_FRAMES = [50,34]
+
 
 LOOP_SHOOT = "resources\\looping_holder"
+
+ROUND1IMAGE = "resources\\ROUND ! 11.png"
+ROUND2IMAGE = "resources\\ROUND22222.png"
+ROUND3IMAGE = "resources\\ROUND 333.png"
 
 
 OPPONENT_DEFAULT_IMAGE = "resources\\enemy4.png"
@@ -131,7 +145,7 @@ ENEMY_SIZE = (1180,820)
 ENEMY_POS = (75, 30)
 
 # Dialogue stuff
-DIALOGUES = ["Hello", "OREWA", "CHINCHIN DAISUKIDAYO!!!!"]
+DIALOGUES = ["Holy Macaronia"]
 
 MESSAGE_BOX = "resources\\message_box.png"
 MESSAGE_BOX_SIZE = (800,190)
@@ -139,6 +153,7 @@ MESSAGE_BOX_POS = (257,569)
 
 INDICATOR_PNG = "resources\\indicator.png"
 INDICATOR_SIZE = (50,50)
+
 
 # Items
 HEALING = "Health Kit"
@@ -160,14 +175,22 @@ INITIAL_ITEMS_SELF = {
 #Other UI stuff
 
 FULL_HEART_IMAGE = "resources\LIFE FULL.png"
+LOST_HEART_IMAGE = "resources\\LIFE ))))0000.png"
+
+PLAYER_HEART_TEXT = "resources\\your life.png"
+OPPONENT_HEART_TEXT = "resources\\ENEMY LIFE POINT.png"
+
 TRUE_BULLET_IMAGE = "resources\実弾.png"    
 
 # SOUND
 POWER_UP_SOUND = "resources\\soundeffects\\powerupbgm.mp3"
-HEAL_SOUND = "resources\soundeffects\healing.mp3"
+HEAL_SOUND = "resources\\soundeffects\\healing.mp3"
 REVEAL_SOUND = "resources\soundeffects\\revealerused.mp3"
 
 RELOAD_SOUND = "resources\\soundeffects\\reloading.mp3"
+GUN_SHOT_SOUND = "resources\\soundeffects\\shooting.mp3"
+GUN_BLANK_SOUND = "resources\\soundeffects\\it was a blank.mp3"
+
 
 BATTLEBGM = "resources\\soundeffects\\fight_bgm.mp3"
 BUTTON_SOUND = "resources\ITEM_SELECT_BUTTON.mp3"
