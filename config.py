@@ -11,7 +11,7 @@ from playaudio import frozen_play
 from collections import Counter
 import threading
 
-random.seed(1)
+# random.seed(1)
 
 # STRING VARIABLES
 REVEAL = 'reveal'
@@ -58,7 +58,7 @@ PLAYER = "player"
 
 
 
-
+CLOUD_IMAGE = "resources//cloud.png"
 
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 800
@@ -194,3 +194,7 @@ GUN_BLANK_SOUND = "resources\\soundeffects\\it was a blank.mp3"
 
 BATTLEBGM = "resources\\soundeffects\\fight_bgm.mp3"
 BUTTON_SOUND = "resources\ITEM_SELECT_BUTTON.mp3"
+ATTACK_SOUND = "resources\soundeffects\clicking.mp3"
+TPING_SOUND = "resources\soundeffects\keybouardtyping.mp3"
+LAST_HEART_SOUND = "resources\soundeffects\lifepoint_only1.mp3"
+HURT_HEART_SOUND = "resources\soundeffects\lifepoint_only2.mp3"

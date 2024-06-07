@@ -111,13 +111,13 @@ class GameGUI:
         self.noheart_player_button_var = None
         self.noheart_player_button_var = None
         
+        self.smoke = pygame.image.load(CLOUD_IMAGE)
             
 
         # Init functions
         self.initialize_shot_frames()
         self.talk_sequence(self.dialogues, self.start_round)
-        # self.initial_buttons()
-        # self.start_round()
+
         
         
         
@@ -161,9 +161,11 @@ class GameGUI:
         if action == LIVE:
             self.state = REVEAL
             self.action_manager.handle_revealer(self.opponent, self.action)
+            self.sight = self.engine.get_shotgun().get_next_shot()
         elif action == BLANK:
             self.state = REVEAL
             self.action_manager.handle_revealer(self.opponent, self.action)
+            self.sight = self.engine.get_shotgun().get_next_shot()
         elif action == HEALING:
             self.state = HEAL
             self.action_manager.handle_healing(self.opponent, self.action)
@@ -238,9 +240,9 @@ class GameGUI:
         self.textbox = None
 
     def round_2_start(self):
+        self.game_round += 1
         if self.game_round>3:
             self.gameover()
-        self.game_round += 1
         self.engine.reset_all()
         self.start_round()
         
@@ -295,7 +297,7 @@ class GameGUI:
 
     def initial_buttons(self):
         self.textbox = None
-        dialogue = ["Your Move"]
+        dialogue = [f"{self.player.name} has currently {self.engine.get_player().itemToString()} with {self.player.health} hearts",[f"{self.opponent.name} has currently {self.engine.get_opponent().itemToString()} with {self.opponent.health} hearts"]]
         self.talk_sequence(dialogue)
         self.buttons.clear()
         self.state = INITIAL
@@ -303,9 +305,9 @@ class GameGUI:
         button_x = MAIN_BUTTON_SIZE[0] - 30
         for i in range(3):
             button_y = 230 + i * (MAIN_BUTTON_SIZE[1] + 20)  
-            position = (button_x, button_y)
+            position = (button_x, button_y)                
             self.buttons.append(Button(INITIAL_BUTTON_LIST[i], MAIN_BUTTON_SIZE, position, self.button_functions[i]))
-        
+
         self.itm_button_var = self.buttons[0]
         self.atk_button_var = self.buttons[1]
         self.chk_button_var = self.buttons[2]
@@ -344,7 +346,7 @@ class GameGUI:
         for i in range(2):
             button_y = (430 + (i-1) * (MAIN_BUTTON_SIZE[1] + (100)))
             position = (button_x, button_y)
-            new_button = Button(new_button_images[i], MAIN_BUTTON_SIZE, position, new_button_functions[i])
+            new_button = Button(new_button_images[i], MAIN_BUTTON_SIZE, position, new_button_functions[i],button_sound=ATTACK_SOUND)
             new_button.start_animation((int(MAIN_BUTTON_SIZE[0]*1.3), int(MAIN_BUTTON_SIZE[1]*1.3)), frames=10) 
             self.buttons.append(new_button)
                      
@@ -384,6 +386,7 @@ class GameGUI:
         self.next_shot_image = pygame.image.load(NEXTSHOTREVEAL)
         self.next_shot_image = pygame.transform.scale(self.next_shot_image, bullet_size)  # Same size as bullets
         self.next_result = None
+        
         self.cloud =  pygame.image.load(SIGHT_BUTTON)
         self.cloud = pygame.transform.scale(self.cloud, bullet_size)
         
@@ -430,7 +433,7 @@ class GameGUI:
         else:
             self.screen.blit(self.cloud, self.cloud_position)
 
-    def animate_round_image(self, image):
+    def animate_round_image(self, image,delay=1000):
         image_rect = image.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
 
         fade_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -444,7 +447,8 @@ class GameGUI:
             pygame.display.update()
             pygame.time.delay(30)
 
-        pygame.time.delay(1000)
+        pygame.time.delay(delay)
+    
     
         
     def create_your_items_button(self):
@@ -510,7 +514,7 @@ class GameGUI:
             self.state = HEAL
             self.action_manager.handle_healing(self.engine.get_player(), self.action)
 
-        if self.engine.get_player().get_health()>3:
+        elif self.engine.get_player().get_health()>3:
             dialogue = ["You already have the max health"]
             self.talk_sequence(dialogue, self.create_your_items_button)
         
@@ -616,7 +620,10 @@ class GameGUI:
                 if self.engine.get_current_player()==self.engine.get_player():
                     if decision == SELF and frame_index == self.player_self_soundframe:
                         play_mp3(GUN_SHOT_SOUND)
-                        
+                        if self.engine.get_other_player().get_health()==1: play_mp3(LAST_HEART_SOUND)
+                        else:play_mp3(HURT_HEART_SOUND)
+
+                        self.animate_round_image(self.smoke,delay=300)
                     elif decision == OPP and frame_index == self.player_opp_soundframe:
                         play_mp3(GUN_SHOT_SOUND)
                 elif self.engine.get_current_player()==self.engine.get_opponent():
@@ -624,6 +631,10 @@ class GameGUI:
                         play_mp3(GUN_SHOT_SOUND)
                     elif decision == OPP and frame_index == self.ai_opp_soundframe:
                         play_mp3(GUN_SHOT_SOUND)
+                        if self.engine.get_other_player().get_health()==1: play_mp3(LAST_HEART_SOUND)
+                        else:play_mp3(HURT_HEART_SOUND)
+                        self.animate_round_image(self.smoke,delay=300)
+
             _num = 0    
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:

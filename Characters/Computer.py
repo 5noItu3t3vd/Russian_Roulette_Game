@@ -10,15 +10,7 @@ class Computer(Player):
         self.revealed = False
         
     def get_action(self, shotgun, sight="Nothing"):
-        """Determine the next action for the computer player.
 
-        Args:
-            shotgun (Shotgun): The shotgun instance.
-            sight (str): The current sight status ("Nothing", True, False).
-
-        Returns:
-            str: The chosen action (e.g., "live", "blank", "self", "opp").
-        """
         self.revealed = shotgun.get_revealed()
         buckshots = shotgun.get_rounds()
         if not buckshots:
@@ -30,6 +22,7 @@ class Computer(Player):
         # Check if Revealer should be used
         if self.items[REVEALER] > 0 and not self.revealed:
             revealed_shot = shotgun.reveal_next_shot()
+            self.revealed = True
             if revealed_shot is not None:
                 if revealed_shot:
                     return LIVE
@@ -44,15 +37,17 @@ class Computer(Player):
         if self.items[STRENGTH] > 0 and shotgun.get_damage() != 2:
             if sight == True:
                 return STRENGTH
-            elif not self.revealed:
+            elif sight==UNKNOWN:
                 if true_count >= false_count:
                     return STRENGTH
         
         if sight == False:
+            self.revealed = False
             return SELF
         
         # Default attack action
         attack_action = OPP if true_count >= false_count else SELF
+        self.revealed = False
         return attack_action
     
     def use_item(self, item_name, shotgun):

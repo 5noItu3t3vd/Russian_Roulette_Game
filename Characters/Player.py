@@ -118,8 +118,8 @@ class Player:
         canHeal,canStrength,canReveal = self.can_heal(),self.can_strength(shotgun),self.can_reveal(shotgun)
         
         if item_name==HEALING: return canHeal
-        if item_name==REVEALER:return canReveal
-        if item_name==STRENGTH: return canStrength
+        elif item_name==REVEALER:return canReveal
+        elif item_name==STRENGTH: return canStrength
         raise AssertionError("What is this item?")        
         
         
