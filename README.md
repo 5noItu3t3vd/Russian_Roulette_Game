@@ -20,12 +20,12 @@ If Mac
 ```source ./gamevenv/bin/activate```
 
 
-Download the python modules and add your name to YOUR_NAME
+Download the python modules and run the main script
 
 
 ```
 pip install -r requirements.txt
-python main.py --name "YOUR_NAME"
+python main.py
 
 ```
 
