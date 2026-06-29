@@ -1,6 +1,6 @@
-# Russian Roulette Game
+# Dry Hard Youths
 
-
+Game inspired by Buckshot Roulette
 
 ## Installation 
 
@@ -37,6 +37,4 @@ brew install portaudio
 brew install ffmpeg
 ```
 
-
-Many of the filepaths are still in Windows format, so change the config file if you must 
 
