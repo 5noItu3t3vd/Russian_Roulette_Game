@@ -2,6 +2,8 @@
 
 Game inspired by Buckshot Roulette
 
+![Main menu screenshot](resources/UNUSED/mainmenu.png)
+
 ## Installation 
 
 ```
